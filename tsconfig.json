@@ -1,0 +1,17 @@
+{
+  "files": ["./src/matrix.ts", "./src/camera.ts"],
+  "compilerOptions": 
+  {
+    "target": "ES2015",
+    "module": "CommonJS",
+    "lib": ["es2015"],
+    "sourceMap": true,
+    "alwaysStrict": true,
+    "noEmitOnError": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "strictNullChecks": true,
+    "outDir": "./build"
+  },
+}
