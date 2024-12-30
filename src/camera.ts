@@ -266,7 +266,7 @@ class Camera
     }
   }
 
-  local_rot(A: Axis, theta: number): void
+  g_rot(A: Axis, theta: number): void
   {
     switch (A)
     {
@@ -284,7 +284,7 @@ class Camera
     multiply4x4_4x4(this.swp, this.inv_rot, this.inv_rot);
   }
 
-  global_rot(A: Axis, theta: number): void
+  l_rot(A: Axis, theta: number): void
   {
     switch (A)
     {

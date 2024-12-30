@@ -4,8 +4,10 @@
   {
     "target": "ES2015",
     "module": "CommonJS",
-    "lib": ["es2015"],
+    "lib": ["ES2015"],
     "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
     "alwaysStrict": true,
     "noEmitOnError": true,
     "noImplicitAny": true,
