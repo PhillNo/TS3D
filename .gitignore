@@ -1,4 +1,8 @@
 build/camera.js
 build/camera.js.map
+build/camera.d.ts.map
+build/camera.d.ts
 build/matrix.js
 build/matrix.js.map
+build/matrix.d.ts.map
+build/matrix.d.ts
