@@ -175,8 +175,13 @@ function dot3(A: Matrix4x1, B: Matrix4x1): number
   return A.arr[0] * B.arr[0] + A.arr[1] * B.arr[1] + A.arr[2] * B.arr[2];
 }
 
-function get_rot_x(rad: number, out: Matrix4x4)
+function get_rot_x(rad: number, out?: Matrix4x4): Matrix4x4
 {
+  if (typeof out === 'undefined')
+  {
+    out = new Matrix4x4();
+  }
+
   /*
   Overwrites `out` with the values to become a rotation matrix about axis.
   */
@@ -202,10 +207,17 @@ function get_rot_x(rad: number, out: Matrix4x4)
   out.arr[13] = 0;
   out.arr[14] = 0;
   out.arr[15] = 1;
+
+  return out;
 }
 
-function get_rot_y(rad: number, out: Matrix4x4)
+function get_rot_y(rad: number, out?: Matrix4x4): Matrix4x4
 {
+  if (typeof out === 'undefined')
+  {
+    out = new Matrix4x4();
+  }
+
   /*
   Overwrites `out` with the values to become a rotation matrix about axis.
   */
@@ -231,10 +243,17 @@ function get_rot_y(rad: number, out: Matrix4x4)
   out.arr[13] = 0;
   out.arr[14] = 0;
   out.arr[15] = 1;
+
+  return out;
 }
 
-function get_rot_z(rad: number, out: Matrix4x4)
+function get_rot_z(rad: number, out?: Matrix4x4): Matrix4x4
 {
+  if (typeof out === 'undefined')
+  {
+    out = new Matrix4x4();
+  }
+
   /*
   Overwrites `out` with the values to become a rotation matrix about axis.
   */
@@ -260,12 +279,15 @@ function get_rot_z(rad: number, out: Matrix4x4)
   out.arr[13] = 0;
   out.arr[14] = 0;
   out.arr[15] = 1;
+
+  return out;
 }
 
 function getI4x4(view?: Float32Array): Matrix4x4
 {
   // creates a new I matrix or overwrites a matrix in place.
-  let out = new Matrix4x4(view)
+  //TODO: This should just take an optional 4x4 matrix parameter
+  let out = new Matrix4x4(view) // Automatically tests that length of view is 16.
 
   out.set_all(
     [
@@ -284,17 +306,19 @@ function magnitude3(A: Matrix4x1): number
   return Math.hypot(A.arr[0], A.arr[1], A.arr[2]);
 }
 
-function multiply(A: Matrix, B: Matrix, C: Matrix): void
+function multiply(A: Matrix, B: Matrix, C?: Matrix): Matrix
 {
-
-  // TODO this could modify in-place if using a swap vector
-
   /*
   Multiplies matrix A by matrix B and stores results in matrix C.
 
   Note that args A and B cannot be modified in place. i.e. the results of
   A*B cannot be stored in the variable B for this generic multiply() fun
   */
+
+  if (typeof C === 'undefined')
+  {
+    C = new Matrix(A.rows(), B.cols());
+  }
 
   let swp: number = 0;
 
@@ -326,19 +350,23 @@ function multiply(A: Matrix, B: Matrix, C: Matrix): void
       }
     }
   }
+
+  return C;
 }
 
-function multiply4x4_4xN(A: Matrix4x4, B: Matrix4xN, C: Matrix4xN): void
+function multiply4x4_4xN(A: Matrix4x4, B: Matrix4xN, C?: Matrix4xN): Matrix4xN
 {
-  // TODO: possibly faster to disallow in-place modify of `B`
-  // since this currently copies from `swp` to `C`
-
   /*
   Optimization of multiply when A and B have 4 rows.
-
+  
   Note: If C is built on a reference to the same Float32Array as B
-        in-place multiplication of B can be achieved
+  in-place multiplication of B can be achieved
   */
+  
+  if (typeof C === 'undefined')
+  {
+    C = new Matrix4xN(B.cols());
+  }
 
   let swp = new Float32Array(4);
 
@@ -369,13 +397,12 @@ function multiply4x4_4xN(A: Matrix4x4, B: Matrix4xN, C: Matrix4xN): void
       C.arr[offset + 3] = swp[3];
     }
   }
+
+  return C;
 }
 
-function multiply4x4_4x4(A: Matrix4x4, B: Matrix4x4, C: Matrix4x4): void
+function multiply4x4_4x4(A: Matrix4x4, B: Matrix4x4, C?: Matrix4x4): Matrix4x4
 {
-
-  // TODO Possibly faster to disallow in-place multiplication
-  // since `C` can be written to directly?
 
   /*
   Optimization of multiply when A and B have 4 rows.
@@ -383,6 +410,11 @@ function multiply4x4_4x4(A: Matrix4x4, B: Matrix4x4, C: Matrix4x4): void
   Note: If C is built on a reference to the same Float32Array as B
         in-place multiplication of B can be achieved
   */
+
+  if (typeof C === 'undefined')
+  {
+    C = new Matrix4x4();
+  }
 
   let swp = new Float32Array(4);
 
@@ -436,9 +468,11 @@ function multiply4x4_4x4(A: Matrix4x4, B: Matrix4x4, C: Matrix4x4): void
   C.arr[13] = swp[1];
   C.arr[14] = swp[2];
   C.arr[15] = swp[3];
+
+  return C;
 }
 
-function multiply4x4_4x1(A: Matrix4x4, B: Matrix4x1, C: Matrix4x1): void
+function multiply4x4_4x1(A: Matrix4x4, B: Matrix4x1, C?: Matrix4x1): Matrix4x1
 {
   /*
   Optimization of multiply in the case `A` is dim 4,4 and `B` is dim 4,1.
@@ -446,6 +480,11 @@ function multiply4x4_4x1(A: Matrix4x4, B: Matrix4x1, C: Matrix4x1): void
   Note: If C is built on a reference to the same Float32Array as B
         in-place multiplication of B can be achieved
   */
+
+  if (typeof C === 'undefined')
+  {
+    C = new Matrix4x1();
+  }
 
   let swp = new Float32Array(4);
 
@@ -464,6 +503,8 @@ function multiply4x4_4x1(A: Matrix4x4, B: Matrix4x1, C: Matrix4x1): void
   C.arr[1] = swp[1];
   C.arr[2] = swp[2];
   C.arr[3] = swp[3];
+
+  return C;
 }
 
 function same_view(A: ArrayBufferView, B: ArrayBufferView): boolean

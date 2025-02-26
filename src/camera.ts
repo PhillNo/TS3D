@@ -163,7 +163,7 @@ class Camera
     multiply4x4_4x4(this.inv_rot, this.inv_tra, this.camera_transform);
   }
 
-  perspective_project(input: Matrix4xN, output: Matrix4xN): void
+  perspective_project(input: Matrix4xN, output?: Matrix4xN): Matrix4xN
   {
     /*
     output can be modified in place since this does not matrix multiply
@@ -186,6 +186,11 @@ class Camera
     http://csis.pace.edu/~benjamin/teaching/cs627/webfiles/vision/v.2.html
 
     */
+    if (typeof output === 'undefined')
+    {
+      output = new Matrix4xN(input.cols());
+    }
+
     let x: number;
     let y: number;
     let z: number;
@@ -214,9 +219,11 @@ class Camera
         }
       }
     }
+
+    return output;
   }
 
-  capture(points: Matrix4xN, relpos: Matrix4xN): void
+  capture(points: Matrix4xN, relpos?: Matrix4xN): Matrix4xN
   {
     /*
     Applies the camera transformation and persective projection to get a "view"
@@ -224,8 +231,15 @@ class Camera
 
     Note that perspective_project CAN modify arguments in place.
     */
+    if (typeof relpos === 'undefined')
+    {
+      relpos = new Matrix4xN(points.cols());
+    }
+
     multiply4x4_4xN(this.camera_transform, points, relpos);
     this.perspective_project(relpos, relpos);
+
+    return relpos;
   }
 
   set_res_and_view_angle(
