@@ -4,7 +4,8 @@ import
   get_rot_x, get_rot_y, get_rot_z,
   multiply4x4_4x4, multiply4x4_4xN,
   getI4x4,
-  transpose4x4
+  transpose4x4,
+  copy4x4
 } from "./matrix.js";
 
 export { Axis, Camera }
@@ -57,18 +58,18 @@ class Camera
   down the corrdiante system z-axis. The p (prime), and pp indicates 
   order of compositions.
   The camera's viewing axis is z, x is width, y is height.
-  inv_Rot is a rotation matrix that will reorient points relative to the
+  `rotation` is a rotation matrix that will reorient points relative to the
   camera. i.e. if the camera pitches up on its intinsic axis then the objects
   in view will appear to move "down" in the image.
-  inv_Tra is analagous to inv_Rot but for translations.
-  camera_transform is the composition of inv_Tra and inv_Rot. i.e. when
+  `translation` is analagous to `rotation` but for translations.
+  camera_transform is the composition of `translation` and `rotation`. i.e. when
   applied to objects it finds their position relative to the camera.
   
   */
 
   protected swp: Matrix4x4 = new Matrix4x4();
-  protected inv_rot: Matrix4x4 = new Matrix4x4();
-  protected inv_tra: Matrix4x4 = new Matrix4x4();
+  protected rotation: Matrix4x4 = new Matrix4x4();
+  protected translation: Matrix4x4 = new Matrix4x4();
   protected camera_transform: Matrix4x4 = new Matrix4x4();
 
   constructor()
@@ -83,9 +84,9 @@ class Camera
     */
 
     getI4x4(this.swp.arr);
-    getI4x4(this.inv_rot.arr);
+    getI4x4(this.rotation.arr);
     getI4x4(this.camera_transform.arr);
-    getI4x4(this.inv_tra.arr);
+    getI4x4(this.translation.arr);
   }
 
   get_res_x(): number
@@ -117,37 +118,44 @@ class Camera
   {
     /*
     Stores the camera position in a column vector and automatically updates
-    inv_Tra and updates the camera transformation matrix.
+    translation matrix and updates the camera transformation matrix.
     */
-    this.inv_tra.arr[12] = -pos.arr[0]; // 4th column
-    this.inv_tra.arr[13] = -pos.arr[1];
-    this.inv_tra.arr[14] = -pos.arr[2];
-    this.inv_tra.arr[15] = 1;
+    this.translation.arr[12] = -pos.arr[0]; // 4th column
+    this.translation.arr[13] = -pos.arr[1];
+    this.translation.arr[14] = -pos.arr[2];
+    this.translation.arr[15] = 1;
   }
 
-  set_rot(x: number, yp: number, zpp: number): void
+  set_TaitBry(x: number, yp: number, zpp: number): void
   {
     /*
-    Updates the Tait-Bryan rotations angles (in radians)
+    Sets the Tait-Bryan rotations angles (in radians)
     Automatically adjusts the camera transformation matrix.
     */
 
     /*
-    inv_Rot is the composition of a rotation on the camera's intrinsic x-,
+    `rotation` is the composition of a rotation on the camera's intrinsic x-,
     then y-, then z- axis.
     The inverse is therefore a negative rotation of z, then y, then x.
-    i.e. inv_Rot = (-X * (-Y * (-Z * I)))
+    i.e. `rotation` = (-X * (-Y * (-Z * I)))
 
-    Since camera_transform must be reset after setting the inv_Rot matrix, it
+    Since camera_transform must be reset after setting the `rotation` matrix, it
     can be used as a temporary variable to speed up the composition.
     */
-    get_rot_z(-zpp, this.inv_rot);
+    get_rot_z(-zpp, this.rotation);
 
     get_rot_y(-yp, this.swp);
-    multiply4x4_4x4(this.swp, this.inv_rot, this.inv_rot)
+    multiply4x4_4x4(this.swp, this.rotation, this.rotation)
 
     get_rot_x(-x, this.swp);
-    multiply4x4_4x4(this.swp, this.inv_rot, this.inv_rot);
+    multiply4x4_4x4(this.swp, this.rotation, this.rotation);
+  }
+
+  set_rot(new_rot: Matrix4x4)
+  {
+    // TODO: test valid rotation matrix conditions:
+    // M (M^T) = (M^T) M = I and det(M) = 1
+    copy4x4(new_rot, this.rotation);
   }
 
   update_cam_transform(): void
@@ -160,7 +168,7 @@ class Camera
 
     https://en.wikipedia.org/wiki/3D_projection#Mathematical_formula
     */
-    multiply4x4_4x4(this.inv_rot, this.inv_tra, this.camera_transform);
+    multiply4x4_4x4(this.rotation, this.translation, this.camera_transform);
   }
 
   perspective_project(input: Matrix4xN, output?: Matrix4xN): Matrix4xN
@@ -282,6 +290,7 @@ class Camera
 
   g_rot(A: Axis, theta: number): void
   {
+    // extrinsic increment of camera orientation
     switch (A)
     {
       case Axis.X:
@@ -295,11 +304,12 @@ class Camera
         break;
     }
 
-    multiply4x4_4x4(this.swp, this.inv_rot, this.inv_rot);
+    multiply4x4_4x4(this.swp, this.rotation, this.rotation);
   }
 
   l_rot(A: Axis, theta: number): void
   {
+    // intrinsic increment of camera orientation
     switch (A)
     {
       case Axis.X:
@@ -312,8 +322,7 @@ class Camera
         get_rot_z(theta, this.swp);
         break;
     }
-    multiply4x4_4x4(this.inv_rot, this.swp, this.swp);
-    this.inv_rot.set_all(this.swp.arr);
+    multiply4x4_4x4(this.rotation, this.swp, this.swp);
+    this.rotation.set_all(this.swp.arr);
   }
-
 }
